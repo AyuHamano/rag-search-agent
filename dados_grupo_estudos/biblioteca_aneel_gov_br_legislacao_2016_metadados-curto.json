@@ -1,0 +1,57 @@
+{
+  "2016-12-31": {
+    "status": "Nenhum registro encontrado.",
+    "registros": []
+  },
+  "2016-12-30": {
+    "status": "23 registro(s).",
+    "registros": [
+      {
+        "numeracaoItem": "1.",
+        "titulo": "DSP - DESPACHO 3284/2016",
+        "autor": "ANEEL",
+        "material": "Legislação",
+        "esfera": "Esfera:Outros",
+        "situacao": "Situação:NÃO CONSTA REVOGAÇÃO EXPRESSA",
+        "assinatura": "Assinatura:15/12/2016",
+        "publicacao": "Publicação:30/12/2016",
+        "assunto": "Assunto:Acatamento",
+        "ementa": null,
+        "pdfs": [
+          {
+            "tipo": "Texto Integral:",
+            "url": "http://www2.aneel.gov.br/cedoc/dsp20163284.pdf",
+            "arquivo": "dsp20163284.pdf",
+            "baixado": true
+          }
+        ]
+      },
+      {
+        "numeracaoItem": "2.",
+        "titulo": "DSP - DESPACHO 3386/2016",
+        "autor": "SCG/ANEEL",
+        "material": "Legislação",
+        "esfera": "Esfera:Outros",
+        "situacao": "Situação:NÃO CONSTA REVOGAÇÃO EXPRESSA",
+        "assinatura": "Assinatura:26/12/2016",
+        "publicacao": "Publicação:30/12/2016",
+        "assunto": "Assunto:Registro",
+        "ementa": "Registra a adequabilidade aos estudos de inventário e ao uso do potencial hidráulico da Pequena Central Hidrelétrica São Carlos, no rio do Peixe, nos municípios de Lacerdópolis e Campos Novos, (SC), de titularidade da Getop Empreendimentos e Gestão Ltda, Neimar Brusamarello e da São Carlos Energia Ltda. Imprimir",
+        "pdfs": [
+          {
+            "tipo": "Texto Integral:",
+            "url": "http://www2.aneel.gov.br/cedoc/dsp20163386ti.pdf",
+            "arquivo": "dsp20163386ti.pdf",
+            "baixado": true
+          },
+          {
+            "tipo": "Nota Técnica nº 951/2016-SCG/ANEEL       :",
+            "url": "http://www2.aneel.gov.br/cedoc/ndsp20163386.pdf",
+            "arquivo": "ndsp20163386.pdf",
+            "baixado": true
+          }
+        ]
+      }
+    ]
+  }
+}
