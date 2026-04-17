@@ -1,22 +1,25 @@
-from pathlib import Path
+from gerar_resposta import buscar_chunks, gerar_resposta
+from ingestion.criar_vetor_store import carregar_vector_store
+from ingestion.ingestion import rodar_ingestion
 
-from carregar_metadados import carregar_metadados
-from const import METADATA_FILES
-from criar_documentos import criar_documentos
+def main(mode = 'ingestion'):
+    if(mode == 'ingestion'):
+        rodar_ingestion()
+    else:
+        index, textos, metadados = carregar_vector_store()
+        pergunta = "Quais são as regras para conexão de microgeração distribuída?"
+        chunks = buscar_chunks(pergunta, index, textos, metadados, top_k=5)
 
+    print(f"\n[RETRIEVAL] {len(chunks)} chunks encontrados:")
+    for i, c in enumerate(chunks, 1):
+        print(f"  {i}. {c['metadados']['titulo']} (score: {c['score']:.3f})")
 
-# teste para leitura e chunking de registros do json
-def rodar_ingestion(pdf_dir: str = "./pdfs"):
+    resposta = gerar_resposta(pergunta, chunks)
+    print(f"\n[RESPOSTA]\n{resposta}")
 
-    registros = carregar_metadados(METADATA_FILES)
-    documentos = criar_documentos(registros, Path(pdf_dir))
-    print("Exemplo de registro criado:")
-    print(registros[0])
-
-    print("Exemplo de documento criado:")
-    print(documentos)
+    return index, textos, metadados
 
 
 if __name__ == "__main__":
 
-    rodar_ingestion()
+    main()

@@ -1,10 +1,6 @@
 
 import os
 import json
-from pathlib import Path
-from typing import Optional
-
-import pdfplumber
 
 from const import IGNORAR_REVOGADOS
 

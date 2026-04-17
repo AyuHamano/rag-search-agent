@@ -1,35 +1,39 @@
 import pdfplumber
-import cloudscraper
-import requests
-import time
-from io import BytesIO
-
-from serializar_tabela import serializar_tabela
-
-
-import pdfplumber
 import pymupdf
 import cloudscraper
 import requests
-import time
 from io import BytesIO
+import time
+import random
 
-from serializar_tabela import serializar_tabela
+from ingestion.serializar_tabela import serializar_tabela
+
+_scraper = None
 
 
-def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 1) -> str:
+def _get_scraper():
+    """Retorna uma instância única de scraper para reutilizar conexões"""
+    global _scraper
+    if _scraper is None:
+        _scraper = cloudscraper.create_scraper()
+    return _scraper
+
+
+def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
     """
     Extrai todo o texto de um PDF, página por página.
     Estratégia otimizada:
     - Se NÃO tem tabelas: usa PyMuPDF (muito mais rápido)
     - Se tem tabelas: usa pdfplumber para serializar corretamente
+
+    Com retry automático com backoff exponencial.
     """
     if caminho_pdf.startswith("http://www2.aneel.gov.br/"):
         caminho_pdf = caminho_pdf.replace("http://", "https://")
         print(f"[INFO] URL normalizada: {caminho_pdf}")
 
-    if not caminho_pdf.endswith(".pdf"):
-        print(f"[ERRO] URL não é PDF: {caminho_pdf}")
+    if not (caminho_pdf.endswith(".pdf") or caminho_pdf.endswith(".html")):
+        print(f"[ERRO] URL não é PDF ou HTML: {caminho_pdf}")
         return ""
 
     headers = {
@@ -43,38 +47,49 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 1) -> str:
     pdf_bytes = None
     for tentativa in range(max_retries):
         try:
-            scraper = cloudscraper.create_scraper()
+            scraper = _get_scraper()
             response = scraper.get(caminho_pdf, headers=headers, timeout=30)
             response.raise_for_status()
             pdf_bytes = response.content
+            print(f"[OK] ✓ Baixado com sucesso: {caminho_pdf.split('/')[-1]}")
             break
-        except Exception as e1:
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code
             print(
-                f"[AVISO] Tentativa {tentativa + 1} com cloudscraper falhou: {type(e1).__name__}"
+                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} - HTTP {status_code}: {caminho_pdf.split('/')[-1]}"
             )
 
-            if tentativa == max_retries - 1:
-                try:
-                    response = requests.get(
-                        caminho_pdf, headers=headers, timeout=30, allow_redirects=True
-                    )
-                    response.raise_for_status()
-                    pdf_bytes = response.content
-                    break
-                except Exception as e2:
-                    print(
-                        f"[ERRO] ✗ Falha ao baixar {caminho_pdf}: {type(e2).__name__}"
-                    )
-                    return ""
-            # else:
-            #     wait_time = 2**tentativa
-            #     print(f"[INFO] Aguardando {wait_time}s antes da próxima tentativa...")
-            #     time.sleep(wait_time)
+            if status_code == 429:  # Rate limited
+                wait_time = (2**tentativa) + random.uniform(0, 1)
+                print(f"[INFO] Rate limited! Aguardando {wait_time:.1f}s...")
+                time.sleep(wait_time)
+            elif status_code in [403, 404]:  # Forbidden/Not found
+                print(f"[ERRO] ✗ Acesso negado (HTTP {status_code}): {caminho_pdf}")
+                return ""
+            elif tentativa < max_retries - 1:
+                wait_time = (2**tentativa) + random.uniform(0, 1)
+                print(
+                    f"[INFO] Aguardando {wait_time:.1f}s antes da próxima tentativa..."
+                )
+                time.sleep(wait_time)
+            else:
+                print(f"[ERRO] ✗ Falha após {max_retries} tentativas: {caminho_pdf}")
+                return ""
+        except Exception as e:
+            print(
+                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} falhou: {type(e).__name__}: {str(e)[:80]}"
+            )
+            if tentativa < max_retries - 1:
+                wait_time = (2**tentativa) + random.uniform(0, 1)
+                print(f"[INFO] Aguardando {wait_time:.1f}s...")
+                time.sleep(wait_time)
+            else:
+                print(f"[ERRO] ✗ Falha ao baixar {caminho_pdf}: {type(e).__name__}")
+                return ""
 
     if not pdf_bytes:
         return ""
 
-    # Etapa 1: Verifica RAPIDAMENTE se tem tabelas usando pdfplumber
     tem_tabelas = False
     try:
         with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
@@ -84,11 +99,9 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 1) -> str:
                     break
     except Exception as e:
         print(f"[AVISO] erro ao verificar tabelas em {caminho_pdf}: {type(e).__name__}")
-        tem_tabelas = False  # Assume que não tem se der erro
+        tem_tabelas = False 
 
-    # Etapa 2: Extrai texto com a estratégia apropriada
     if tem_tabelas:
-        # Usa pdfplumber (mais lento mas extrai tabelas corretamente)
         print(f"[INFO] tem tabelas - usando pdfplumber para {caminho_pdf}")
         texto_completo = []
         try:
@@ -115,7 +128,6 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 1) -> str:
             print(f"[ERRO] falha ao extrair com pdfplumber: {type(e).__name__}")
             return ""
     else:
-        # Usa PyMuPDF (MUITO mais rápido)
         print(f"[INFO] sem tabelas - usando PyMuPDF para {caminho_pdf}")
         try:
             doc = pymupdf.open(stream=BytesIO(pdf_bytes), filetype="pdf")

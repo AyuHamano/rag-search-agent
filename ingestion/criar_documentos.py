@@ -1,13 +1,11 @@
-
-import os
-import json
-import re
 from pathlib import Path
-from typing import Optional
+import time
+import random
 
-from extrair_texto_pdf import extrair_texto_pdf
-from const import PDF_DIR, CHUNK_OVERLAP, CHUNK_SIZE
-from chunk_por_paragrafo import chunk_por_paragrafo
+from ingestion.extrair_texto_pdf import extrair_texto_pdf
+from ingestion.extrair_texto_html import extrair_texto_html
+from const import CHUNK_OVERLAP, CHUNK_SIZE
+from gerar_resposta.chunk_por_paragrafo import chunk_por_paragrafo
 
 
 def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
@@ -39,29 +37,28 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
         if i % 100 == 0:
             print(f"[INFO] Processando {i}/{total} registros...")
 
+        # Adiciona delay entre requisições para evitar rate limiting
+        if i > 0:
+            delay = random.uniform(0.5, 1.5)  # 0.5 a 1.5 segundos
+            time.sleep(delay)
+
         pdfs = reg.get("pdfs", [])
         if not pdfs:
             continue
 
-        # Usar o primeiro PDF (Texto Integral)
         pdf_info = pdfs[0]
         nome_arquivo = pdf_info.get("url", "")
-        print(f"[INFO] Processando PDF: {nome_arquivo} ({i+1}/{total})")
-        caminho_pdf = pdf_dir / nome_arquivo
+        print(f"[INFO] Processando arquivo: {nome_arquivo} ({i+1}/{total})")
 
-
-        # if not caminho_pdf.exists():
-        #     continue 
-        
-        texto = extrair_texto_pdf(str(nome_arquivo))
+        if nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm"):
+            texto = extrair_texto_html(str(nome_arquivo))
+        else:
+            texto = extrair_texto_pdf(str(nome_arquivo))
         if not texto:
             continue
 
         print(f"[INFO] Texto extraído (tamanho: {len(texto)} caracteres)")
-        
-        
-        
-        
+
         chunks = chunk_por_paragrafo(texto, CHUNK_SIZE, CHUNK_OVERLAP)
 
         # Metadados enriquecidos para cada chunk
@@ -69,18 +66,17 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
             "titulo": reg.get("titulo", ""),
             "autor": reg.get("autor", ""),
             "data_publicacao": reg.get("data_publicacao", ""),
-            "assunto": reg.get("assunto", "").replace("Assunto:", "").strip(),
-            "situacao": reg.get("situacao", "").replace("Situação:", "").strip(),
+            "assunto": (reg.get("assunto") or "").replace("Assunto:", "").strip(),
+            "situacao": (reg.get("situacao") or "").replace("Situação:", "").strip(),
             "ementa": reg.get("ementa", "") or "",
             "arquivo": nome_arquivo,
             "url": pdf_info.get("url", ""),
         }
 
         for j, chunk in enumerate(chunks):
-            documentos.append({
-                "texto": chunk,
-                "metadados": {**metadados_base, "chunk_index": j}
-            })
+            documentos.append(
+                {"texto": chunk, "metadados": {**metadados_base, "chunk_index": j}}
+            )
 
     print(f"[INFO] Total de chunks gerados: {len(documentos)}")
     return documentos
