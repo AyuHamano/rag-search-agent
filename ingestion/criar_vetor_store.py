@@ -34,7 +34,7 @@ def criar_vector_store(documentos: list[dict], salvar_em: str = "db/chroma_db"):
     index = faiss.IndexFlatIP(dimensao)
     index.add(embeddings)
 
-    Path(salvar_em).mkdir(exist_ok=True)
+    Path(salvar_em).mkdir(parents=True, exist_ok=True)
     faiss.write_index(index, f"{salvar_em}/index.faiss")
     with open(f"{salvar_em}/metadados.pkl", "wb") as f:
         pickle.dump({"textos": textos, "metadados": metadados}, f)
