@@ -74,9 +74,9 @@ Os arquivos JSON já estão em `dados_grupo_estudos/`. Se precisar atualizar:
 python main.py --mode=ingestion
 ```
 
-#### Passo 2: Rodar a resposta dapergunta fixa
+#### Passo 2: Rodar a resposta da pergunta fixa
 ```bash
-python main.py --mode=resposta
+python -m streamlit run app/app.py --server.fileWatcherType none
 ```
 
 ## Parsing:

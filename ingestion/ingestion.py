@@ -1,13 +1,11 @@
 from pathlib import Path
 import logging
-
-logger = logging.getLogger(__name__)
-
 from ingestion.carregar_metadados import carregar_metadados
 from const import METADATA_FILES
 from ingestion.criar_documentos import criar_documentos
 from ingestion.criar_vetor_store import criar_vector_store, carregar_vector_store
 
+logger = logging.getLogger(__name__)
 
 def rodar_ingestion(pdf_dir: str = "./pdfs"):
 

@@ -17,7 +17,6 @@ def buscar_chunks(
 
     buscar_n = top_k * 5 if filtro_assunto else top_k
 
-    # ✅ Use query_points (qdrant-client >= 1.7) instead of search_points
     response = client.query_points(
         collection_name=collection_name,
         query=query_emb.tolist(),
