@@ -1,8 +1,13 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import logging
 
-# Carrega as variáveis do .env
+logger = logging.getLogger(__name__)
+
+# Em produção/CI-CD o .env pode não existir, pq as variáveis de ambiente são injetadas pelos Secrets do GitHub Actions
+# load_dotenv() lida com isso silenciosamente.
+# As variáveis de ambiente do SO terao prioridade se override=False (padrão).
 load_dotenv()
 
 def gerar_resposta(pergunta: str, chunks: list[dict], api_key: str = None) -> str:
@@ -11,7 +16,7 @@ def gerar_resposta(pergunta: str, chunks: list[dict], api_key: str = None) -> st
     """
     key = api_key or os.getenv("GEMINI_API_KEY")
     if not key:
-        return "[Erro] Chave de API do Gemini não encontrada no arquivo .env"
+        return "[Erro] Chave de API do Gemini não configurada (ausente nas variáveis de ambiente e no arquivo .env)"
 
     genai.configure(api_key=key)
 
@@ -54,4 +59,5 @@ Para respostas válidas, sempre escreva o nome da Fonte (título e data)."""
         resposta = model.generate_content(prompt_usuario)
         return resposta.text.strip()
     except Exception as e:
+        logger.error("Ao chamar API do Gemini: %s", e)
         return f"[ERRO] ao chamar API do Gemini: {str(e)}"

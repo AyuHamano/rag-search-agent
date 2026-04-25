@@ -1,4 +1,7 @@
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 from ingestion.carregar_metadados import carregar_metadados
 from const import METADATA_FILES
@@ -12,10 +15,10 @@ def rodar_ingestion(pdf_dir: str = "./pdfs"):
     documentos = criar_documentos(registros, Path(pdf_dir))
     
     if not documentos:
-        print("[Aviso] Nenhum documento original processado (provável bloqueio de rede 403).")
+        logger.warning("Nenhum documento original processado (provável bloqueio de rede 403).")
         documentos = []
         
-    print("[INFO] Injetando documentos base de teste (Geração Distribuída/ANEEL) para a aplicação não quebrar...")
+    logger.info("Injetando documentos base de teste (Geração Distribuída/ANEEL) para a aplicação não quebrar...")
     documentos.append(
         {
             "texto": "Regras de Geração Distribuída: A microgeração distribuída é caracterizada por central geradora de energia elétrica, com potência instalada menor ou igual a 75 kW e que utilize cogeração qualificada ou fontes renováveis de energia elétrica, conectada na rede de distribuição por meio de instalações de unidades consumidoras. A minigeração distribuída é caracterizada por potência instalada superior a 75 kW e menor ou igual a 5 MW. O sistema de compensação de energia permite que a energia excedente gerada seja injetada na rede da distribuidora.",

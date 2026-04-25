@@ -1,9 +1,10 @@
-
 import os
 import json
+import logging
 
 from const import IGNORAR_REVOGADOS
 
+logger = logging.getLogger(__name__)
 
 def carregar_metadados(arquivos: list[str]) -> list[dict]:
     """
@@ -15,7 +16,7 @@ def carregar_metadados(arquivos: list[str]) -> list[dict]:
 
     for arquivo in arquivos:
         if not os.path.exists(arquivo):
-            print(f"[AVISO] Arquivo não encontrado: {arquivo}")
+            logger.warning("Arquivo não encontrado: %s", arquivo)
             continue
 
         with open(arquivo, encoding="utf-8") as f:
@@ -33,5 +34,5 @@ def carregar_metadados(arquivos: list[str]) -> list[dict]:
                 reg["data_publicacao"] = data_pub
                 registros.append(reg)
 
-    print(f"[INFO] Total de registros carregados: {len(registros)}")
+    logger.info("Total de registros carregados: %d", len(registros))
     return registros
