@@ -50,7 +50,7 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
         nome_arquivo = pdf_info.get("url", "")
         print(f"[INFO] Processando arquivo: {nome_arquivo} ({i+1}/{total})")
 
-        if nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm"):
+        if (nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm")):
             texto = extrair_texto_html(str(nome_arquivo))
         else:
             texto = extrair_texto_pdf(str(nome_arquivo))

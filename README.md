@@ -24,7 +24,17 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-#### 3. Instale as dependências
+#### 3. Instale as dependências com docker
+```bash
+
+docker-compose up --build
+# Apenas Qdrant (sem a app)
+docker-compose up qdrant
+docker-compose up -d
+
+```
+
+ou instale direto
 ```bash
 pip install --upgrade pip
 pip install pdfplumber pymupdf langchain langchain-community
@@ -59,14 +69,14 @@ Os arquivos JSON já estão em `dados_grupo_estudos/`. Se precisar atualizar:
 
 ### Como Executar
 
-#### Opção 1: Pipeline completo
+#### Passo 1: Ingestion
 ```bash
-python parsing.py
+python main.py --mode=ingestion
 ```
 
-#### Opção 2: Apenas parsing e ingestion
+#### Passo 2: Rodar a resposta dapergunta fixa
 ```bash
-python parsing.py
+python main.py --mode=resposta
 ```
 
 ## Parsing:

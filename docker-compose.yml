@@ -1,0 +1,32 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ch2-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - rag-network
+
+  rag-app:
+    build: .
+    container_name: rag-search-agent
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+    volumes:
+      - ./dataset:/app/dataset
+      - ./pdfs:/app/pdfs
+    networks:
+      - rag-network
+
+networks:
+  rag-network:
+    driver: bridge
+
+volumes:
+  qdrant_data:

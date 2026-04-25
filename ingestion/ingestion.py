@@ -11,10 +11,11 @@ def rodar_ingestion(pdf_dir: str = "./pdfs"):
     registros = carregar_metadados(METADATA_FILES)
     documentos = criar_documentos(registros, Path(pdf_dir))
 
-    index, textos, metadados = criar_vector_store(documentos)
-    index, textos, metadados = carregar_vector_store()
+    client, collection_name = criar_vector_store(documentos)
 
-    return index, textos, metadados
+    client, collection_name = carregar_vector_store()
+
+    return client, collection_name
 
 
 if __name__ == "__main__":

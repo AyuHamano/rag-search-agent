@@ -1,18 +1,18 @@
-
 from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-import pickle
-from pathlib import Path
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
 
 
-
-def criar_vector_store(documentos: list[dict], salvar_em: str = "db/chroma_db"):
+def criar_vector_store(
+    documentos: list[dict],
+    qdrant_url: str = "http://localhost:6333",
+    collection_name: str = "legislacao",
+):
     """
-    Gera embeddings com sentence-transformers e indexa no FAISS.
+    Gera embeddings com sentence-transformers e indexa no Qdrant.
     Usa modelo multilíngue leve que funciona bem em português.
 
-    O índice é salvo em disco para não precisar reprocessar toda vez.
+    Os dados são salvos no Qdrant server (com persistência em disco).
     """
 
     print("[INFO] Carregando modelo de embeddings...")
@@ -20,34 +20,67 @@ def criar_vector_store(documentos: list[dict], salvar_em: str = "db/chroma_db"):
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
 
+    print("[INFO] Conectando ao Qdrant...")
+    client = QdrantClient(url=qdrant_url)
+
     textos = [doc["texto"] for doc in documentos]
     metadados = [doc["metadados"] for doc in documentos]
 
     print(f"[INFO] Gerando embeddings para {len(textos)} chunks...")
 
     embeddings = modelo.encode(textos, batch_size=32, show_progress_bar=True)
-    embeddings = np.array(embeddings, dtype="float32")
-
-    faiss.normalize_L2(embeddings)
-
     dimensao = embeddings.shape[1]
-    index = faiss.IndexFlatIP(dimensao)
-    index.add(embeddings)
 
-    Path(salvar_em).mkdir(exist_ok=True)
-    faiss.write_index(index, f"{salvar_em}/index.faiss")
-    with open(f"{salvar_em}/metadados.pkl", "wb") as f:
-        pickle.dump({"textos": textos, "metadados": metadados}, f)
+    # Criar ou recriar coleção
+    try:
+        client.delete_collection(collection_name=collection_name)
+        print(f"[INFO] Coleção '{collection_name}' removida (para recriar)")
+    except:
+        pass
 
-    print(f"[INFO] Vector store salvo em '{salvar_em}/'")
-    return index, textos, metadados
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=VectorParams(size=dimensao, distance=Distance.COSINE),
+    )
+    print(f"[INFO] Coleção '{collection_name}' criada")
+
+    # Inserir pontos no Qdrant
+    points = []
+    for i, (embedding, texto, metadata) in enumerate(
+        zip(embeddings, textos, metadados)
+    ):
+        point = PointStruct(
+            id=i,
+            vector=embedding.tolist(),
+            payload={
+                "texto": texto,
+                "metadados": metadata,
+            },
+        )
+        points.append(point)
+
+    client.upsert(
+        collection_name=collection_name,
+        points=points,
+    )
+
+    print(f"[INFO] {len(points)} documentos inseridos no Qdrant")
+    return client, collection_name
 
 
-def carregar_vector_store(pasta: str = "db/chroma_db"):
-    print( """Carrega índice FAISS e metadados salvos em disco.""")
-    index = faiss.read_index(f"{pasta}/index.faiss")
-    with open(f"{pasta}/metadados.pkl", "rb") as f:
-        dados = pickle.load(f)
+def carregar_vector_store(
+    qdrant_url: str = "http://localhost:6333", collection_name: str = "legislacao"
+):
+    """Conecta ao Qdrant e retorna client + nome da coleção."""
+    print("[INFO] Conectando ao Qdrant...")
+    client = QdrantClient(url=qdrant_url)
 
-    print(f"[INFO] Vector store carregado: {index.ntotal} chunks indexados")
-    return index, dados["textos"], dados["metadados"]
+    # Verificar se coleção existe
+    collections = client.get_collections()
+    if collection_name not in [c.name for c in collections.collections]:
+        raise ValueError(f"Coleção '{collection_name}' não encontrada no Qdrant")
+
+    collection_info = client.get_collection(collection_name)
+    print(f"[INFO] Coleção carregada: {collection_info.points_count} pontos indexados")
+    return client, collection_name
+
