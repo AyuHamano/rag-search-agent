@@ -97,3 +97,12 @@ Entrar no ambiente venv
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process 
 .\venv\Scripts\Activate.ps1
 ```
+
+Baixar streamlit
+```
+pip install streamlit
+```
+Rodar o comando
+```
+python -m streamlit run app/app.py --server.fileWatcherType none
+```
