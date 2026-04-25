@@ -1,12 +1,14 @@
 from pathlib import Path
 import time
 import random
+import logging
 
 from ingestion.extrair_texto_pdf import extrair_texto_pdf
 from ingestion.extrair_texto_html import extrair_texto_html
 from const import CHUNK_OVERLAP, CHUNK_SIZE
 from gerar_resposta.chunk_por_paragrafo import chunk_por_paragrafo
 
+logger = logging.getLogger(__name__)
 
 def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
     """
@@ -35,7 +37,7 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
 
     for i, reg in enumerate(registros):
         if i % 100 == 0:
-            print(f"[INFO] Processando {i}/{total} registros...")
+            logger.info("Processando %d/%d registros...", i, total)
 
         # Adiciona delay entre requisições para evitar rate limiting
         if i > 0:
@@ -48,7 +50,7 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
 
         pdf_info = pdfs[0]
         nome_arquivo = pdf_info.get("url", "")
-        print(f"[INFO] Processando arquivo: {nome_arquivo} ({i+1}/{total})")
+        logger.info("Processando arquivo: %s (%d/%d)", nome_arquivo, i + 1, total)
 
         if (nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm")):
             texto = extrair_texto_html(str(nome_arquivo))
@@ -57,7 +59,7 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
         if not texto:
             continue
 
-        print(f"[INFO] Texto extraído (tamanho: {len(texto)} caracteres)")
+        logger.info("Texto extraído (tamanho: %d caracteres)", len(texto))
 
         chunks = chunk_por_paragrafo(texto, CHUNK_SIZE, CHUNK_OVERLAP)
 
@@ -78,5 +80,5 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
                 {"texto": chunk, "metadados": {**metadados_base, "chunk_index": j}}
             )
 
-    print(f"[INFO] Total de chunks gerados: {len(documentos)}")
+    logger.info("Total de chunks gerados: %d", len(documentos))
     return documentos

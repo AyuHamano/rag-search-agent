@@ -5,11 +5,15 @@ import requests
 from io import BytesIO
 import time
 import random
+import logging
 
 from ingestion.serializar_tabela import serializar_tabela
 
-_scraper = None
+# Biblioteca logging para exibir mensagens de log (ok, aviso, erro). Mais profissional que print()
+# Sintaxe igual printf() em C
+logger = logging.getLogger(__name__)
 
+_scraper = None
 
 def _get_scraper():
     """Retorna uma instância única de scraper para reutilizar conexões"""
@@ -17,6 +21,7 @@ def _get_scraper():
     if _scraper is None:
         _scraper = cloudscraper.create_scraper()
     return _scraper
+
 
 
 def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
@@ -30,10 +35,10 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
     """
     if caminho_pdf.startswith("http://www2.aneel.gov.br/"):
         caminho_pdf = caminho_pdf.replace("http://", "https://")
-        print(f"[INFO] URL normalizada: {caminho_pdf}")
+        logger.info("URL normalizada: %s", caminho_pdf)
 
     if not (caminho_pdf.endswith(".pdf") or caminho_pdf.endswith(".html")):
-        print(f"[ERRO] URL não é PDF ou HTML: {caminho_pdf}")
+        logger.error("URL não é PDF ou HTML: %s", caminho_pdf)
         return ""
 
     headers = {
@@ -51,40 +56,34 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
             response = scraper.get(caminho_pdf, headers=headers, timeout=30)
             response.raise_for_status()
             pdf_bytes = response.content
-            print(f"[OK] ✓ Baixado com sucesso: {caminho_pdf.split('/')[-1]}")
+            logger.info("Baixado com sucesso: %s", caminho_pdf.split('/')[-1])
             break
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
-            print(
-                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} - HTTP {status_code}: {caminho_pdf.split('/')[-1]}"
-            )
+            logger.warning("Tentativa %d/%d - HTTP %d: %s", tentativa + 1, max_retries, status_code, caminho_pdf.split('/')[-1])
 
             if status_code == 429:  # Rate limited
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(f"[INFO] Rate limited! Aguardando {wait_time:.1f}s...")
+                logger.info("Rate limited! Aguardando %.1fs...", wait_time)
                 time.sleep(wait_time)
             elif status_code in [403, 404]:  # Forbidden/Not found
-                print(f"[ERRO] ✗ Acesso negado (HTTP {status_code}): {caminho_pdf}")
+                logger.error("Acesso negado (HTTP %d): %s", status_code, caminho_pdf)
                 return ""
             elif tentativa < max_retries - 1:
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(
-                    f"[INFO] Aguardando {wait_time:.1f}s antes da próxima tentativa..."
-                )
+                logger.info("Aguardando %.1fs antes da próxima tentativa...", wait_time)
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha após {max_retries} tentativas: {caminho_pdf}")
+                logger.error("Falha após %d tentativas: %s", max_retries, caminho_pdf)
                 return ""
         except Exception as e:
-            print(
-                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} falhou: {type(e).__name__}: {str(e)[:80]}"
-            )
+            logger.warning("Tentativa %d/%d falhou: %s: %s", tentativa + 1, max_retries, type(e).__name__, str(e)[:80])
             if tentativa < max_retries - 1:
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(f"[INFO] Aguardando {wait_time:.1f}s...")
+                logger.info("Aguardando %.1fs...", wait_time)
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha ao baixar {caminho_pdf}: {type(e).__name__}")
+                logger.error("Falha ao baixar %s: %s", caminho_pdf, type(e).__name__)
                 return ""
 
     if not pdf_bytes:
@@ -98,11 +97,11 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
                     tem_tabelas = True
                     break
     except Exception as e:
-        print(f"[AVISO] erro ao verificar tabelas em {caminho_pdf}: {type(e).__name__}")
+        logger.warning("Erro ao verificar tabelas em %s: %s", caminho_pdf, type(e).__name__)
         tem_tabelas = False 
 
     if tem_tabelas:
-        print(f"[INFO] tem tabelas - usando pdfplumber para {caminho_pdf}")
+        logger.info("Tem tabelas - usando pdfplumber para %s", caminho_pdf)
         texto_completo = []
         try:
             with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
@@ -122,13 +121,13 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
                         )
 
             resultado = "\n".join(texto_completo).strip()
-            print(f"[INFO] extraído com pdfplumber ({len(resultado)} caracteres)")
+            logger.info("Extraído com pdfplumber (%d caracteres)", len(resultado))
             return resultado
         except Exception as e:
-            print(f"[ERRO] falha ao extrair com pdfplumber: {type(e).__name__}")
+            logger.error("Falha ao extrair com pdfplumber: %s", type(e).__name__)
             return ""
     else:
-        print(f"[INFO] sem tabelas - usando PyMuPDF para {caminho_pdf}")
+        logger.info("Sem tabelas - usando PyMuPDF para %s", caminho_pdf)
         try:
             doc = pymupdf.open(stream=BytesIO(pdf_bytes), filetype="pdf")
             texto_completo = []
@@ -140,10 +139,10 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
 
             doc.close()
             resultado = "\n".join(texto_completo).strip()
-            print(f"[INFO] extraído com PyMuPDF ({len(resultado)} caracteres)")
+            logger.info("Extraído com PyMuPDF (%d caracteres)", len(resultado))
             return resultado
         except Exception as e:
-            print(f"[ERRO] Falha ao extrair com PyMuPDF: {type(e).__name__}")
+            logger.error("Falha ao extrair com PyMuPDF: %s", type(e).__name__)
             return ""
 
 

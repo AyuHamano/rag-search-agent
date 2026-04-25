@@ -3,6 +3,9 @@ import cloudscraper
 import requests
 import time
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Session global para reutilizar conexões
 _scraper = None
@@ -24,10 +27,10 @@ def extrair_texto_html(url_html: str, max_retries: int = 3) -> str:
     """
     if url_html.startswith("http://www2.aneel.gov.br/"):
         url_html = url_html.replace("http://", "https://")
-        print(f"[INFO] URL normalizada: {url_html}")
+        logger.info("URL normalizada: %s", url_html)
 
     if not url_html.endswith(".html"):
-        print(f"[ERRO] URL não é HTML: {url_html}")
+        logger.error("URL não é HTML: %s", url_html)
         return ""
 
     headers = {
@@ -45,40 +48,34 @@ def extrair_texto_html(url_html: str, max_retries: int = 3) -> str:
             response = scraper.get(url_html, headers=headers, timeout=30)
             response.raise_for_status()
             html_content = response.content
-            print(f"[OK] ✓ Baixado com sucesso: {url_html.split('/')[-1]}")
+            logger.info("Baixado com sucesso: %s", url_html.split('/')[-1])
             break
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
-            print(
-                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} - HTTP {status_code}: {url_html.split('/')[-1]}"
-            )
+            logger.warning("Tentativa %d/%d - HTTP %d: %s", tentativa + 1, max_retries, status_code, url_html.split('/')[-1])
 
             if status_code == 429:  # Rate limited
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(f"[INFO] Rate limited! Aguardando {wait_time:.1f}s...")
+                logger.info("Rate limited! Aguardando %.1fs...", wait_time)
                 time.sleep(wait_time)
             elif status_code in [403, 404]:  # Forbidden/Not found
-                print(f"[ERRO] ✗ Acesso negado (HTTP {status_code}): {url_html}")
+                logger.error("Acesso negado (HTTP %d): %s", status_code, url_html)
                 return ""
             elif tentativa < max_retries - 1:
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(
-                    f"[INFO] Aguardando {wait_time:.1f}s antes da próxima tentativa..."
-                )
+                logger.info("Aguardando %.1fs antes da próxima tentativa...", wait_time)
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha após {max_retries} tentativas: {url_html}")
+                logger.error("Falha após %d tentativas: %s", max_retries, url_html)
                 return ""
         except Exception as e:
-            print(
-                f"[AVISO] Tentativa {tentativa + 1}/{max_retries} falhou: {type(e).__name__}: {str(e)[:80]}"
-            )
+            logger.warning("Tentativa %d/%d falhou: %s: %s", tentativa + 1, max_retries, type(e).__name__, str(e)[:80])
             if tentativa < max_retries - 1:
                 wait_time = (2**tentativa) + random.uniform(0, 1)
-                print(f"[INFO] Aguardando {wait_time:.1f}s...")
+                logger.info("Aguardando %.1fs...", wait_time)
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha ao baixar {url_html}: {type(e).__name__}")
+                logger.error("Falha ao baixar %s: %s", url_html, type(e).__name__)
                 return ""
 
     if not html_content:
@@ -101,10 +98,10 @@ def extrair_texto_html(url_html: str, max_retries: int = 3) -> str:
         text = "\n".join(chunk for chunk in chunks if chunk)
 
         resultado = text.strip()
-        print(f"[INFO] extraído HTML ({len(resultado)} caracteres)")
+        logger.info("Extraído HTML (%d caracteres)", len(resultado))
         return resultado
     except Exception as e:
-        print(f"[ERRO] Falha ao extrair HTML: {type(e).__name__}")
+        logger.error("Falha ao extrair HTML: %s", type(e).__name__)
         return ""
 
 

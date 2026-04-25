@@ -100,10 +100,19 @@ python main.py --mode=resposta
 
 ## Agente
 - Implementar o Agente LLM usando LangChain/LlamaIndex
-- Streamlit
+- Crie um arquivo .env e coloque sua chave API do Gemini conforme o .env.example
 
 Entrar no ambiente venv
 ```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process 
 .\venv\Scripts\Activate.ps1
+```
+
+Baixar streamlit
+```
+pip install streamlit
+```
+Rodar o comando
+```
+python -m streamlit run app/app.py --server.fileWatcherType none
 ```

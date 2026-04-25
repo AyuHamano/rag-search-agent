@@ -15,7 +15,7 @@ def criar_vector_store(
     Os dados são salvos no Qdrant server (com persistência em disco).
     """
 
-    print("[INFO] Carregando modelo de embeddings...")
+    logger.info("Carregando modelo de embeddings...")
     modelo = SentenceTransformer(
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
@@ -26,12 +26,11 @@ def criar_vector_store(
     textos = [doc["texto"] for doc in documentos]
     metadados = [doc["metadados"] for doc in documentos]
 
-    print(f"[INFO] Gerando embeddings para {len(textos)} chunks...")
+    logger.info("Gerando embeddings para %d chunks...", len(textos))
 
     embeddings = modelo.encode(textos, batch_size=32, show_progress_bar=True)
     dimensao = embeddings.shape[1]
 
-    # Criar ou recriar coleção
     try:
         client.delete_collection(collection_name=collection_name)
         print(f"[INFO] Coleção '{collection_name}' removida (para recriar)")
@@ -44,7 +43,6 @@ def criar_vector_store(
     )
     print(f"[INFO] Coleção '{collection_name}' criada")
 
-    # Inserir pontos no Qdrant
     points = []
     for i, (embedding, texto, metadata) in enumerate(
         zip(embeddings, textos, metadados)
@@ -75,7 +73,6 @@ def carregar_vector_store(
     print("[INFO] Conectando ao Qdrant...")
     client = QdrantClient(url=qdrant_url)
 
-    # Verificar se coleção existe
     collections = client.get_collections()
     if collection_name not in [c.name for c in collections.collections]:
         raise ValueError(f"Coleção '{collection_name}' não encontrada no Qdrant")
