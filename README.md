@@ -90,7 +90,7 @@ python parsing.py
 
 ## Agente
 - Implementar o Agente LLM usando LangChain/LlamaIndex
-- Streamlit
+- Crie um arquivo .env e coloque sua chave API do Gemini conforme o .env.example
 
 Entrar no ambiente venv
 ```
