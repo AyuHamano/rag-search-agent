@@ -49,7 +49,7 @@ Para respostas válidas, sempre escreva o nome da Fonte (título e data)."""
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash",
             system_instruction=instrucao_sistema,
-            generation_config={"temperature": 0.0} # remove a criatividade da IA, para manter dentro das regras especificadas
+            generation_config={"temperature": 0.0} # remove a "criatividade" da IA, para manter dentro das regras especificadas
         )
         resposta = model.generate_content(prompt_usuario)
         return resposta.text.strip()

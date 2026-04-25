@@ -51,7 +51,7 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
             response = scraper.get(caminho_pdf, headers=headers, timeout=30)
             response.raise_for_status()
             pdf_bytes = response.content
-            print(f"[OK] ✓ Baixado com sucesso: {caminho_pdf.split('/')[-1]}")
+            print(f"[OK] Baixado com sucesso: {caminho_pdf.split('/')[-1]}")
             break
         except requests.exceptions.HTTPError as e:
             status_code = e.response.status_code
@@ -64,7 +64,7 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
                 print(f"[INFO] Rate limited! Aguardando {wait_time:.1f}s...")
                 time.sleep(wait_time)
             elif status_code in [403, 404]:  # Forbidden/Not found
-                print(f"[ERRO] ✗ Acesso negado (HTTP {status_code}): {caminho_pdf}")
+                print(f"[ERRO] Acesso negado (HTTP {status_code}): {caminho_pdf}")
                 return ""
             elif tentativa < max_retries - 1:
                 wait_time = (2**tentativa) + random.uniform(0, 1)
@@ -73,7 +73,7 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
                 )
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha após {max_retries} tentativas: {caminho_pdf}")
+                print(f"[ERRO] Falha após {max_retries} tentativas: {caminho_pdf}")
                 return ""
         except Exception as e:
             print(
@@ -84,7 +84,7 @@ def extrair_texto_pdf(caminho_pdf: str, max_retries: int = 3) -> str:
                 print(f"[INFO] Aguardando {wait_time:.1f}s...")
                 time.sleep(wait_time)
             else:
-                print(f"[ERRO] ✗ Falha ao baixar {caminho_pdf}: {type(e).__name__}")
+                print(f"[ERRO] Falha ao baixar {caminho_pdf}: {type(e).__name__}")
                 return ""
 
     if not pdf_bytes:

@@ -5,6 +5,8 @@ from gerar_resposta.buscar_chunks import buscar_chunks
 from gerar_resposta.gerar_resposta import gerar_resposta
 
 # comando usado pra rodar: python -m streamlit run app/app.py --server.fileWatcherType none
+# a flag "--server.fileWatcherType none" serve p desativar a atualização automatica de arquivos
+# entao, se vc alterar algo no código vc tem q rodar o comando de novo. usei isso p evitar problemas na leitura de arquivos
 
 @st.cache_resource
 def carregar_dados():
