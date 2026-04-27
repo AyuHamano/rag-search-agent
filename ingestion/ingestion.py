@@ -1,7 +1,8 @@
+# ingestion/pipeline.py
+
 import sys
-import json
-from pathlib import Path
 import logging
+from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
@@ -15,32 +16,31 @@ logger = logging.getLogger(__name__)
 
 METADATA_FILES = [
     # str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2016_metadados-curto.json"),
-
     str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2016_metadados.json"),
     str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2021_metadados.json"),
     str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2022_metadados.json"),
 ]
 
-_DOCUMENTOS_CACHE = _PROJECT_ROOT / "documentos_cache.json"
+_CACHE_PATH = _PROJECT_ROOT / "documentos_cache.jsonl"
 
 
 def rodar_ingestion(pdf_dir: Path = _PROJECT_ROOT / "pdfs", force_recreate: bool = False):
-    if _DOCUMENTOS_CACHE.exists():
-        print("Carregando documentos do cache: %s", _DOCUMENTOS_CACHE)
-        documentos = json.loads(_DOCUMENTOS_CACHE.read_text(encoding="utf-8"))
-    else:
-        registros = carregar_metadados(METADATA_FILES)
-        documentos = criar_documentos(registros, Path(pdf_dir))
-        if documentos:
-            _DOCUMENTOS_CACHE.write_text(
-                json.dumps(documentos, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
-            logger.info("Cache L1 salvo: %d documentos", len(documentos))
+    # L1: extrai PDFs e salva chunks no .jsonl (retoma se já existir)
+    registros = carregar_metadados(METADATA_FILES)
+    criar_documentos(registros, Path(pdf_dir), _CACHE_PATH)
 
-    client, collection_name = criar_vector_store(documentos, force_recreate=force_recreate)
+    # L2: lê o .jsonl em streaming e indexa no Qdrant (retoma via checkpoint)
+    client, collection_name = criar_vector_store(
+        cache_path=_CACHE_PATH,
+        force_recreate=force_recreate,
+    )
+
     return client, collection_name
 
 
 if __name__ == "__main__":
-
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
     rodar_ingestion()
