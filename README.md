@@ -3,6 +3,11 @@
 Sistema de busca inteligente com Retrieval Augmented Generation (RAG) para legislação ANEEL.
 
 ---
+## Apresentação em Slides
+| *Clique na imagem abaixo para ver os slides 👇* |
+| :---: |
+| <a href="https://canva.link/idwuz47d0ncr4df"><img src="file:///home/felipe/Downloads/rag%20aneel%20apresenta%C3%A7%C3%A3o.png" width="500"></a> |
+---
 
 ## Como Rodar
 
@@ -27,10 +32,10 @@ source venv/bin/activate
 #### 3. Instale as dependências com docker
 ```bash
 
-docker-compose up --build
+docker compose up --build
 # Apenas Qdrant (sem a app)
-docker-compose up qdrant
-docker-compose up -d
+docker compose up qdrant
+docker compose up -d
 
 ```
 
