@@ -1,59 +1,43 @@
+import sys
+import json
 from pathlib import Path
 import logging
+
+_PROJECT_ROOT = Path(__file__).parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 from ingestion.carregar_metadados import carregar_metadados
-from const import METADATA_FILES
 from ingestion.criar_documentos import criar_documentos
 from ingestion.criar_vetor_store import criar_vector_store, carregar_vector_store
 
 logger = logging.getLogger(__name__)
 
-def rodar_ingestion(pdf_dir: str = "./pdfs"):
+METADATA_FILES = [
+    # str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2016_metadados-curto.json"),
 
-    registros = carregar_metadados(METADATA_FILES)
-    documentos = criar_documentos(registros, Path(pdf_dir))
-    
-    if not documentos:
-        logger.warning("Nenhum documento original processado (provável bloqueio de rede 403).")
-        documentos = []
-        
-    logger.info("Injetando documentos base de teste (Geração Distribuída/ANEEL) para a aplicação não quebrar...")
-    documentos.append(
-        {
-            "texto": "Regras de Geração Distribuída: A microgeração distribuída é caracterizada por central geradora de energia elétrica, com potência instalada menor ou igual a 75 kW e que utilize cogeração qualificada ou fontes renováveis de energia elétrica, conectada na rede de distribuição por meio de instalações de unidades consumidoras. A minigeração distribuída é caracterizada por potência instalada superior a 75 kW e menor ou igual a 5 MW. O sistema de compensação de energia permite que a energia excedente gerada seja injetada na rede da distribuidora.",
-            "metadados": {
-                "titulo": "Resolução Normativa ANEEL nº 482/2012 e 1059/2023",
-                "autor": "ANEEL",
-                "data_publicacao": "2023-01-01",
-                "assunto": "Geração Distribuída",
-                "situacao": "Vigente",
-                "ementa": "Condições gerais para acesso de micro e minigeração distribuída",
-                "arquivo": "mock_gd.pdf",
-                "url": "http://localhost",
-                "chunk_index": 0
-            }
-        }
-    )
-    documentos.append(
-        {
-            "texto": "A ANEEL (Agência Nacional de Energia Elétrica) é uma autarquia em regime especial vinculada ao Ministério de Minas e Energia, criada para regular e fiscalizar a geração, transmissão, distribuição e comercialização de energia elétrica no Brasil. Sua função é garantir as condições de fornecimento, estabelecendo tarifas justas e mediando conflitos entre os agentes do setor e os consumidores.",
-            "metadados": {
-                "titulo": "Institucional ANEEL",
-                "autor": "Legislativo",
-                "data_publicacao": "1996-12-26",
-                "assunto": "Institucional",
-                "situacao": "Vigente",
-                "ementa": "Cria a Agência Nacional de Energia Elétrica - ANEEL, disciplina o regime das concessões de serviços públicos de energia elétrica e dá outras providências.",
-                "arquivo": "mock_aneel.pdf",
-                "url": "http://localhost",
-                "chunk_index": 0
-            }
-        }
-    )
+    str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2016_metadados.json"),
+    str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2021_metadados.json"),
+    str(_PROJECT_ROOT / "dataset" / "biblioteca_aneel_gov_br_legislacao_2022_metadados.json"),
+]
 
-    client, collection_name = criar_vector_store(documentos)
+_DOCUMENTOS_CACHE = _PROJECT_ROOT / "documentos_cache.json"
 
-    client, collection_name = carregar_vector_store()
 
+def rodar_ingestion(pdf_dir: Path = _PROJECT_ROOT / "pdfs", force_recreate: bool = False):
+    if _DOCUMENTOS_CACHE.exists():
+        print("Carregando documentos do cache: %s", _DOCUMENTOS_CACHE)
+        documentos = json.loads(_DOCUMENTOS_CACHE.read_text(encoding="utf-8"))
+    else:
+        registros = carregar_metadados(METADATA_FILES)
+        documentos = criar_documentos(registros, Path(pdf_dir))
+        if documentos:
+            _DOCUMENTOS_CACHE.write_text(
+                json.dumps(documentos, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            logger.info("Cache L1 salvo: %d documentos", len(documentos))
+
+    client, collection_name = criar_vector_store(documentos, force_recreate=force_recreate)
     return client, collection_name
 
 

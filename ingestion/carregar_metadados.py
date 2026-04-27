@@ -2,8 +2,6 @@ import os
 import json
 import logging
 
-from const import IGNORAR_REVOGADOS
-
 logger = logging.getLogger(__name__)
 
 def carregar_metadados(arquivos: list[str]) -> list[dict]:
@@ -26,10 +24,7 @@ def carregar_metadados(arquivos: list[str]) -> list[dict]:
             if not isinstance(valor, dict):
                 continue
             for reg in valor.get("registros", []):
-                # Filtrar revogados
-                situacao = reg.get("situacao", "")
-                if IGNORAR_REVOGADOS and "REVOGADO" in situacao.upper():
-                    continue
+                
 
                 reg["data_publicacao"] = data_pub
                 registros.append(reg)

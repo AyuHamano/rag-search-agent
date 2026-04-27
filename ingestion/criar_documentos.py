@@ -1,6 +1,4 @@
 from pathlib import Path
-import time
-import random
 import logging
 
 from ingestion.extrair_texto_pdf import extrair_texto_pdf
@@ -9,6 +7,7 @@ from const import CHUNK_OVERLAP, CHUNK_SIZE
 from gerar_resposta.chunk_por_paragrafo import chunk_por_paragrafo
 
 logger = logging.getLogger(__name__)
+
 
 def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
     """
@@ -39,23 +38,24 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
         if i % 100 == 0:
             logger.info("Processando %d/%d registros...", i, total)
 
-        # Adiciona delay entre requisições para evitar rate limiting
-        if i > 0:
-            delay = random.uniform(0.5, 1.5)  # 0.5 a 1.5 segundos
-            time.sleep(delay)
-
         pdfs = reg.get("pdfs", [])
         if not pdfs:
             continue
 
         pdf_info = pdfs[0]
-        nome_arquivo = pdf_info.get("url", "")
-        logger.info("Processando arquivo: %s (%d/%d)", nome_arquivo, i + 1, total)
+        nome_arquivo = pdf_info.get("arquivo", "")
+        caminho_local = pdf_dir / nome_arquivo
 
-        if (nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm")):
-            texto = extrair_texto_html(str(nome_arquivo))
+        logger.info("Processando arquivo: %s (%d/%d)", caminho_local, i + 1, total)
+
+        # if not caminho_local.exists():
+        #     logger.warning("Arquivo não encontrado: %s", caminho_local)
+        #     continue
+
+        if nome_arquivo.endswith(".html") or nome_arquivo.endswith(".htm"):
+            texto = extrair_texto_html(str(caminho_local))
         else:
-            texto = extrair_texto_pdf(str(nome_arquivo))
+            texto = extrair_texto_pdf(str(caminho_local))
         if not texto:
             continue
 
@@ -63,7 +63,6 @@ def criar_documentos(registros: list[dict], pdf_dir: Path) -> list[dict]:
 
         chunks = chunk_por_paragrafo(texto, CHUNK_SIZE, CHUNK_OVERLAP)
 
-        # Metadados enriquecidos para cada chunk
         metadados_base = {
             "titulo": reg.get("titulo", ""),
             "autor": reg.get("autor", ""),
