@@ -6,7 +6,7 @@ Sistema de busca inteligente com Retrieval Augmented Generation (RAG) para legis
 ## Apresentação em Slides
 | *Clique na imagem abaixo para ver os slides 👇* |
 | :---: |
-| <a href="https://canva.link/idwuz47d0ncr4df"><img src="file:///home/felipe/Downloads/rag%20aneel%20apresenta%C3%A7%C3%A3o.png" width="500"></a> |
+| <a href="https://canva.link/idwuz47d0ncr4df"><img src="rag aneel apresentação.png" width="500"></a> |
 ---
 
 ## Como Rodar
