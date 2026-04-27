@@ -11,4 +11,5 @@ PyMuPDF>=1.23.0
 cloudscraper>=1.2.71
 google-generativeai
 streamlit
-pytest>=7.0.0
+curl-cffi
+pytest
