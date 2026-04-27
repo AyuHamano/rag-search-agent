@@ -42,10 +42,10 @@ docker compose up -d
 ou instale direto
 ```bash
 pip install --upgrade pip
-pip install pdfplumber pymupdf langchain langchain-community
-pip install sentence-transformers faiss-cpu
+pip install pdfplumber pymupdf
+pip install sentence-transformers
 pip install openai cloudscraper requests
-pip install chromadb  # para vector store
+pip install qdrant-client  # para vector store
 ```
 
 #### 4. Configure o projeto
@@ -98,7 +98,7 @@ python -m streamlit run app/app.py --server.fileWatcherType none
 ## Vector embedding
 
 - modelos: nomic-embed-text, mxbai-embed-large, paraphrase-multilingual-MiniLM-L12-v2
-- Salva no Chroma
+- Salva no Qdrant
 
 ## Retrieval - Busca inteligente
 - busca semântica: CrossEncoder
