@@ -12,3 +12,4 @@ cloudscraper>=1.2.71
 google-generativeai
 streamlit
 curl-cffi
+pytest
