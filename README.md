@@ -26,21 +26,9 @@ source venv/bin/activate
 
 #### 3. Instale as dependências com docker
 ```bash
-
 docker-compose up --build
-# Apenas Qdrant (sem a app)
 docker-compose up qdrant
 docker-compose up -d
-
-```
-
-ou instale direto
-```bash
-pip install --upgrade pip
-pip install pdfplumber pymupdf langchain langchain-community
-pip install sentence-transformers faiss-cpu
-pip install openai cloudscraper requests
-pip install chromadb  # para vector store
 ```
 
 #### 4. Configure o projeto
@@ -49,70 +37,46 @@ Edite o arquivo `const.py` conforme necessário:
 PDF_DIR = Path("./pdfs") 
 
 METADATA_FILES = [
-    "./dados_grupo_estudos/biblioteca_aneel_gov_br_legislacao_2016_metadados-curto.json",
-    # Descomente para adicionar mais metadados
-    # "./dados_grupo_estudos/biblioteca_aneel_gov_br_legislacao_2021_metadados.json",
-    # "./dados_grupo_estudos/biblioteca_aneel_gov_br_legislacao_2022_metadados.json",
+    "./dataset/biblioteca_aneel_gov_br_legislacao_2016_metadados.json",
+    "./dataset/biblioteca_aneel_gov_br_legislacao_2021_metadados.json",
+    "./dataset/biblioteca_aneel_gov_br_legislacao_2022_metadados.json",
 ]
 
-CHUNK_SIZE = 800        # Caracteres por chunk
-CHUNK_OVERLAP = 150     # Sobreposição entre chunks
-IGNORAR_REVOGADOS = False  # Filtrar documentos revogados
+CHUNK_SIZE = 800       
+CHUNK_OVERLAP = 150     
 ```
 
 #### 5. Baixe os metadados
-Os arquivos JSON já estão em `dados_grupo_estudos/`. Se precisar atualizar:
-```bash
-# Coloque os arquivos JSON em dados_grupo_estudos/
-# Formato esperado: biblioteca_aneel_gov_br_legislacao_AAAA_metadados.json
-```
-
-### Como Executar
+Os arquivos JSON já estão em `dataset/`. Se precisar atualizar:
 
 #### Passo 1: Ingestion
+
+- Rodar esse comando para:
+    - Fazer download dos pdfs
+    - Ler o conteúdo e criar os chunks
+    - Fazer o parsing e salvar no QDrant
+
 ```bash
-python main.py --mode=ingestion
+python -m ingestion.run --baixar-pdfs
 ```
+
+ou para adiantar o processo, pode descompactar os chunks do "documentos_cache.zip" e e rodar o comando para salvar eles no QDrant
+
+```bash
+python -m ingestion.run 
+```
+
 
 #### Passo 2: Rodar a resposta da pergunta fixa
 ```bash
 python -m streamlit run app/app.py --server.fileWatcherType none
 ```
 
-## Parsing:
-
-- Mapear o dataset e ver quais pdf's possuem tabela:
-   - Possuem tabela --> utilizar o pdfplumber
-   - Possuem apenas texto corrido --> pymupdf
-- juntar tudo no final com seus respectivos metados
-
-## Chunking:
-
-- Usar Langchain, que é mais popular
-
 ## Vector embedding
 
-- modelos: nomic-embed-text, mxbai-embed-large, paraphrase-multilingual-MiniLM-L12-v2
-- Salva no Chroma
-
-## Retrieval - Busca inteligente
-- busca semântica: CrossEncoder
+```
+intfloat/multilingual-e5-base
+```
 
 ## Agente
-- Implementar o Agente LLM usando LangChain/LlamaIndex
-- Crie um arquivo .env e coloque sua chave API do Gemini conforme o .env.example
-
-Entrar no ambiente venv
-```
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process 
-.\venv\Scripts\Activate.ps1
-```
-
-Baixar streamlit
-```
-pip install streamlit
-```
-Rodar o comando
-```
-python -m streamlit run app/app.py --server.fileWatcherType none
-```
+- gemini-2.5-flash

@@ -4,12 +4,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 def extrair_texto_html(caminho_html: str) -> str:
-    """
-    Extrai texto limpo de um arquivo HTML local.
-    Remove scripts, styles, e normaliza espaços em branco.
-    """
+   
     if not (caminho_html.endswith(".html") or caminho_html.endswith(".htm")):
         logger.error("Arquivo não é HTML: %s", caminho_html)
         return ""
