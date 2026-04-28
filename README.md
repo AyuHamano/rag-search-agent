@@ -3,6 +3,11 @@
 Sistema de busca inteligente com Retrieval Augmented Generation (RAG) para legislação ANEEL.
 
 ---
+## Apresentação em Slides
+| *Clique na imagem abaixo para ver os slides 👇* |
+| :---: |
+| <a href="https://canva.link/idwuz47d0ncr4df"><img src="rag aneel apresentação.png" width="500"></a> |
+---
 
 ## Como Rodar
 
