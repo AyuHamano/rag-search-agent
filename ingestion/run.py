@@ -24,11 +24,7 @@ METADATA_FILES = [
 _CACHE_PATH = _PROJECT_ROOT / "documentos_cache.jsonl"
 
 
-def rodar_ingestion(
-    pdf_dir: Path = _PROJECT_ROOT / "pdfs",
-    force_recreate: bool = False,
-    baixar_pdfs: bool = False,
-):
+def rodar_ingestion(pdf_dir: Path = _PROJECT_ROOT / "pdfs", force_recreate: bool = False, baixar_pdfs: bool = False):
     if baixar_pdfs:
         logger.info("Iniciando download dos PDFs...")
         baixar_todos_pdfs()
@@ -54,6 +50,11 @@ def _parse_args():
         action="store_true",
         help="Baixa os PDFs antes de processar (default: não baixa).",
     )
+    parser.add_argument(
+        "--force-recreate-pdfs",
+        action="store_true",
+        help="Força a recriação dos PDFs antes de processar (default: não recria).",
+    )
     return parser.parse_args()
 
 
@@ -64,7 +65,6 @@ if __name__ == "__main__":
     )
     args = _parse_args()
     rodar_ingestion(
-        pdf_dir=args.pdf_dir,
-        force_recreate=args.force_recreate,
         baixar_pdfs=args.baixar_pdfs,
+        force_recreate=args.force_recreate_pdfs
     )

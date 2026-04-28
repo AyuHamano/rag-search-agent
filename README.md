@@ -51,16 +51,15 @@ Os arquivos JSON já estão em `dataset/`. Se precisar atualizar:
 
 #### Passo 1: Ingestion
 
+```bash
+python -m ingestion.run --baixar-pdfs
+```
 - Rodar esse comando para:
     - Fazer download dos pdfs
     - Ler o conteúdo e criar os chunks
     - Fazer o parsing e salvar no QDrant
 
-```bash
-python -m ingestion.run --baixar-pdfs
-```
-
-ou para adiantar o processo, pode descompactar os chunks do "documentos_cache.zip" e e rodar o comando para salvar eles no QDrant
+Ou, se quiser o processo, pode descompactar os chunks do "documentos_cache.zip" e e rodar o comando para salvar eles no QDrant
 
 ```bash
 python -m ingestion.run 
