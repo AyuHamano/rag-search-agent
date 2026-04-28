@@ -10,20 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def extrair_texto_pdf(caminho_pdf: str) -> str:
-    """
-    Extrai todo o texto de um PDF local, página por página.
-    Estratégia otimizada:
-    - Se NÃO tem tabelas: usa PyMuPDF (muito mais rápido)
-    - Se tem tabelas: usa pdfplumber para serializar corretamente
-    """
+   
     if not (caminho_pdf.endswith(".pdf") or caminho_pdf.endswith(".html") or caminho_pdf.endswith(".htm")):
         logger.error("Arquivo não é PDF ou HTML: %s", caminho_pdf)
         return ""
 
     caminho = Path(caminho_pdf)
-    # if not caminho.exists():
-    #     logger.error("Arquivo não encontrado: %s", caminho_pdf)
-    #     return ""
 
     try:
         pdf_bytes = caminho.read_bytes()
@@ -88,9 +80,3 @@ def extrair_texto_pdf(caminho_pdf: str) -> str:
         except Exception as e:
             logger.error("Falha ao extrair com PyMuPDF: %s", type(e).__name__)
             return ""
-
-
-if __name__ == "__main__":
-    caminho_pdf = "../pdfs/aaap2022001_1_1.pdf"
-    texto = extrair_texto_pdf(caminho_pdf)
-    print(texto)

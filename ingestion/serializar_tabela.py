@@ -1,10 +1,5 @@
 
 def serializar_tabela(tabela: list[list]) -> str:
-    """
-    Converte uma tabela extraída pelo pdfplumber em
-    texto estruturado no formato 'chave: valor | chave: valor'.
-    Isso melhora muito a qualidade do embedding.
-    """
     if not tabela or len(tabela) < 2:
         return ""
 

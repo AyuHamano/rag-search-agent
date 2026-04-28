@@ -2,13 +2,6 @@
 import re
 
 def chunk_por_paragrafo(texto: str, chunk_size: int, overlap: int) -> list[str]:
-    """
-    Estratégia de chunking por parágrafo com fallback por tamanho.
-
-    Documentos legislativos têm estrutura natural por parágrafos
-    numerados (art., §, inc.) — respeitar essa estrutura melhora
-    a coerência semântica dos chunks.
-    """
 
     paragrafos = re.split(r'\n\s*\n|\n(?=\d+\.\s)', texto)
     paragrafos = [p.strip() for p in paragrafos if p.strip()]
