@@ -76,6 +76,18 @@ python -m ingestion.run
 python -m streamlit run app/app.py --server.fileWatcherType none
 ```
 
+## Como Rodar os Testes
+
+Para executar os testes automatizados do projeto (localizados na pasta `tests`), certifique-se de estar com o ambiente virtual ativado e utilize o `pytest` executando o seguinte comando na raiz do repositório:
+
+```bash
+pytest tests/
+```
+Ou, alternativamente:
+```bash
+python -m pytest tests/
+```
+
 ## Vector embedding
 
 ```
